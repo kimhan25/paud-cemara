@@ -1,0 +1,21 @@
+# Kredensial & config lokal
+.env
+.env.local
+api/config.local.php
+
+# File upload (jangan commit konten sekolah ke git)
+uploads/**
+!uploads/.gitkeep
+!uploads/*/.gitkeep
+!uploads/.htaccess
+
+# Log
+*.log
+/tmp/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

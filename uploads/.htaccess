@@ -1,0 +1,16 @@
+# File di folder ini TIDAK boleh dieksekusi sebagai PHP.
+# Ini mitigasi kalau ada file berbahaya lolos upload.
+<FilesMatch "\.(php|phtml|phar|pl|py|cgi|sh)$">
+  Require all denied
+</FilesMatch>
+
+# Hanya serve sebagai konten statis
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+
+# Set MIME untuk tipe gambar umum
+AddType image/jpeg .jpg .jpeg
+AddType image/png  .png
+AddType image/webp .webp
+AddType image/gif  .gif

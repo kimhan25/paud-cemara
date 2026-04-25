@@ -1,0 +1,37 @@
+# =====================================================================
+# PAUD Cemara — Apache rules (shared hosting / VPS LAMP stack)
+# =====================================================================
+
+# Compress responses for faster load
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+# Cache static assets aggressively (CSS/JS/gambar)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|jsx|png|jpg|jpeg|webp|gif|svg|ico|woff2?)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Blok akses langsung ke file sensitif
+<FilesMatch "(config\.php|_session\.php|\.env|\.htaccess|\.gitignore)$">
+  Require all denied
+</FilesMatch>
+
+# Blok akses ke folder SQL (schema & seed files)
+RedirectMatch 403 ^/sql/.*$
+
+# Blok akses ke folder .git kalau ter-deploy tanpa sengaja
+RedirectMatch 404 /\.git
+
+# MIME untuk JSX (biar Babel standalone bisa memuat)
+AddType application/javascript .jsx
+AddType application/javascript .js
