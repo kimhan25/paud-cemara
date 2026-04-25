@@ -68,7 +68,7 @@ PowerShell.
 Contoh:
 
 ```powershell
-cd C:\path\ke\project\joki
+cd C:\path\ke\project\paud-cemara
 ```
 
 ### 2. Install PHP dan aktifkan extension yang dibutuhkan

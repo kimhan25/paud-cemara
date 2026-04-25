@@ -21,6 +21,14 @@ Jika butuh panduan lebih detail:
 - [`HANDOVER.md`](HANDOVER.md): panduan lengkap setup lokal, verifikasi, dan troubleshooting
 - [`DEPLOY.md`](DEPLOY.md): panduan deploy ke server / VPS
 
+## Peran file root
+
+- `README.md`: panduan utama setup Windows dan gambaran project
+- `SETUP_WINDOWS.md`: checklist cepat setup lokal
+- `HANDOVER.md`: panduan lengkap setup, verifikasi, dan troubleshooting
+- `DEPLOY.md`: panduan deploy ke server
+- `Dockerfile`: opsi deploy berbasis container, tidak dipakai untuk local setup Windows
+
 ## Fitur utama
 
 - halaman publik untuk profil sekolah, program, galeri, berita, kontak, dan PPDB
@@ -36,7 +44,7 @@ Jika butuh panduan lebih detail:
 Contoh:
 
 ```powershell
-cd C:\path\ke\project\joki
+cd C:\path\ke\project\paud-cemara
 ```
 
 ### 2. Pastikan PHP CLI siap
@@ -212,7 +220,7 @@ Endpoint admin:
 ## Struktur project
 
 ```text
-joki/
+project-root/
 ├─ index.html
 ├─ src/
 ├─ styles/

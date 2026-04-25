@@ -10,7 +10,7 @@ Untuk penjelasan lengkap, lihat `HANDOVER.md`.
 ## 1. Buka project di PowerShell
 
 ```powershell
-cd C:\path\ke\project\joki
+cd C:\path\ke\project\paud-cemara
 ```
 
 ## 2. Pastikan PHP CLI siap
@@ -122,4 +122,3 @@ psql -h localhost -p 5432 -U postgres -d paud_cemara -c "SELECT username FROM ad
 - `psql` tidak dikenali: cek instalasi PostgreSQL dan `PATH`
 - `Database connection failed`: cek `api/config.local.php`, user/password, port, dan status service PostgreSQL
 - halaman tampil tapi data tidak berubah: cek `http://localhost:8000/api/bootstrap.php` karena frontend bisa fallback ke seed lokal
-
