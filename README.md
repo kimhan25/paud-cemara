@@ -6,7 +6,7 @@ dan database PostgreSQL.
 **Stack:** HTML + React (via CDN) · PHP murni + PDO · PostgreSQL · tanpa build
 step frontend.
 
-## Jalur yang direkomendasikan
+## Dokumentasi
 
 README ini ditulis untuk setup:
 
@@ -15,18 +15,9 @@ README ini ditulis untuk setup:
 - pgAdmin 4
 - PHP CLI
 
-Jika butuh panduan lebih detail:
+Dokumen lain:
 
-- [`SETUP_WINDOWS.md`](SETUP_WINDOWS.md): checklist singkat setup Windows
-- [`HANDOVER.md`](HANDOVER.md): panduan lengkap setup lokal, verifikasi, dan troubleshooting
 - [`DEPLOY.md`](DEPLOY.md): panduan deploy ke server / VPS
-
-## Peran file root
-
-- `README.md`: panduan utama setup Windows dan gambaran project
-- `SETUP_WINDOWS.md`: checklist cepat setup lokal
-- `HANDOVER.md`: panduan lengkap setup, verifikasi, dan troubleshooting
-- `DEPLOY.md`: panduan deploy ke server
 - `Dockerfile`: opsi deploy berbasis container, tidak dipakai untuk local setup Windows
 
 ## Fitur utama
