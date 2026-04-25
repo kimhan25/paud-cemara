@@ -6,6 +6,21 @@ dan database PostgreSQL.
 **Stack:** HTML + React (via CDN) · PHP murni + PDO · PostgreSQL · tanpa build
 step frontend.
 
+## Jalur yang direkomendasikan
+
+README ini ditulis untuk setup:
+
+- Windows native
+- PostgreSQL Desktop / PostgreSQL installer
+- pgAdmin 4
+- PHP CLI
+
+Jika butuh panduan lebih detail:
+
+- [`SETUP_WINDOWS.md`](SETUP_WINDOWS.md): checklist singkat setup Windows
+- [`HANDOVER.md`](HANDOVER.md): panduan lengkap setup lokal, verifikasi, dan troubleshooting
+- [`DEPLOY.md`](DEPLOY.md): panduan deploy ke server / VPS
+
 ## Fitur utama
 
 - halaman publik untuk profil sekolah, program, galeri, berita, kontak, dan PPDB
@@ -13,55 +28,124 @@ step frontend.
 - CRUD berita, galeri, album, program, guru/staf, dan pengaturan sekolah
 - upload gambar ke folder lokal `uploads/`
 - form `Kontak` dan `PPDB` tersimpan ke PostgreSQL
-- dokumentasi setup lokal dan deploy terpisah
 
-## Dokumentasi
+## Quick Start untuk Windows + PostgreSQL Desktop
 
-- [`SETUP_WINDOWS.md`](SETUP_WINDOWS.md): checklist cepat setup lokal Windows native
-- [`HANDOVER.md`](HANDOVER.md): panduan setup lokal lengkap, verifikasi, dan troubleshooting
-- [`DEPLOY.md`](DEPLOY.md): panduan deploy ke server / VPS
+### 1. Buka project di PowerShell
 
-## Quick Start
+Contoh:
 
-### 1. Siapkan dependency
+```powershell
+cd C:\path\ke\project\joki
+```
 
-Yang dibutuhkan:
+### 2. Pastikan PHP CLI siap
 
-- PHP `>= 8.1`
-- PostgreSQL `>= 14`
+Jalankan:
 
-Untuk setup Windows native dengan PostgreSQL Desktop / pgAdmin, ikuti
-[`SETUP_WINDOWS.md`](SETUP_WINDOWS.md).
+```powershell
+php -v
+php --ini
+php -m | findstr /I pgsql
+php -m | findstr /I mbstring
+php -m | findstr /I fileinfo
+```
 
-### 2. Buat config lokal
+Yang harus tersedia:
+
+- `pdo_pgsql`
+- `pgsql`
+- `mbstring`
+- `fileinfo`
+
+Jika `php` tidak dikenali, periksa instalasi PHP dan `PATH`.
+
+### 3. Pastikan PostgreSQL Desktop siap
+
+Jalankan:
+
+```powershell
+psql --version
+Get-Service *postgres*
+```
+
+Service PostgreSQL harus berstatus `Running`.
+
+Jika belum aktif, nyalakan dari aplikasi `Services` di Windows.
+
+### 4. Buat database `paud_cemara`
+
+Opsi `pgAdmin`:
+
+1. Buka `pgAdmin 4`
+2. Login ke server PostgreSQL lokal
+3. Klik kanan `Databases`
+4. Pilih `Create > Database...`
+5. Isi nama database: `paud_cemara`
+
+Opsi `psql`:
+
+```powershell
+createdb -h localhost -p 5432 -U postgres paud_cemara
+```
+
+### 5. Import schema dan seed
+
+Opsi `pgAdmin`:
+
+1. Klik database `paud_cemara`
+2. Buka `Tools > Query Tool`
+3. Jalankan isi file `sql/schema.sql`
+4. Setelah selesai, jalankan isi file `sql/seed.sql`
+
+Opsi `psql`:
+
+```powershell
+psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql\schema.sql
+psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql\seed.sql
+```
+
+### 6. Buat config lokal
 
 Copy file contoh:
 
-```bash
-cp api/config.local.example.php api/config.local.php
+```powershell
+Copy-Item api\config.local.example.php api\config.local.php
 ```
 
-Lalu sesuaikan koneksi database di `api/config.local.php`.
+Lalu edit `api/config.local.php` dan isi koneksi database lokal.
 
-### 3. Buat database dan import schema
+Contoh minimal:
 
-Contoh untuk PostgreSQL di `5432`:
-
-```bash
-psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE paud_cemara;"
-psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql/schema.sql
-psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql/seed.sql
+```php
+<?php
+return [
+    'db' => [
+        'host'     => 'localhost',
+        'port'     => '5432',
+        'dbname'   => 'paud_cemara',
+        'user'     => 'postgres',
+        'password' => 'PASSWORD_DB',
+        'sslmode'  => '',
+    ],
+];
 ```
 
-### 4. Buat akun admin
+Catatan penting:
 
-```bash
-php sql/make_admin.php admin PasswordKuat123
+- project default memakai port `5433` di `api/config.php`
+- PostgreSQL Desktop di Windows biasanya memakai port `5432`
+- jika PostgreSQL lokal memakai port lain, sesuaikan di `api/config.local.php`
+
+### 7. Buat akun admin
+
+```powershell
+php sql\make_admin.php admin PasswordKuat123
 ```
 
-### 5. Jalankan aplikasi
+### 8. Jalankan aplikasi
 
-```bash
+```powershell
 php -S localhost:8000
 ```
 
@@ -70,16 +154,33 @@ Buka:
 - `http://localhost:8000`
 - `http://localhost:8000/#/admin`
 
-## Catatan setup
+## Verifikasi cepat
 
-- project default memakai port database `5433` di `api/config.php`
-- PostgreSQL Desktop di Windows biasanya memakai `5432`, jadi sesuaikan lewat `api/config.local.php`
-- frontend akan fallback ke `src/seed.js` jika API / DB gagal
-- jangan buka `index.html` via `file://`
+Di browser:
 
-## API ringkas
+- `http://localhost:8000`
+- `http://localhost:8000/api/bootstrap.php`
+- `http://localhost:8000/#/admin`
 
-Endpoint utama:
+Di PowerShell:
+
+```powershell
+(Invoke-WebRequest http://localhost:8000/api/bootstrap.php).Content
+psql -h localhost -p 5432 -U postgres -d paud_cemara -c "SELECT username FROM admin_user;"
+```
+
+## Jika ada error
+
+- `php` tidak dikenali:
+  cek instalasi PHP dan `PATH`
+- `psql` tidak dikenali:
+  cek instalasi PostgreSQL dan `PATH`
+- `Database connection failed`:
+  cek `api/config.local.php`, user/password, port, dan status service PostgreSQL
+- halaman tampil tapi data tidak berubah:
+  cek `http://localhost:8000/api/bootstrap.php` karena frontend bisa fallback ke `src/seed.js`
+
+## Endpoint utama
 
 - `GET /api/bootstrap.php`
 - `POST /api/contact.php`
@@ -101,11 +202,12 @@ Endpoint admin:
 - `GET/POST/PUT/DELETE /api/admin/teachers.php`
 - `GET/POST/PUT/DELETE /api/admin/albums.php`
 
-## Operasional
+## Catatan repo
 
-- `uploads/` hanya menyimpan placeholder di repo; file upload asli tidak perlu di-commit
+- `uploads/` hanya menyimpan placeholder di repo
+- file upload asli tidak perlu di-commit
 - `api/config.local.php`, `.env`, dan kredensial lokal tidak masuk repo
-- environment variable `PAUD_*` bisa dipakai untuk override config sementara
+- environment variable `PAUD_*` bisa dipakai untuk override sementara
 
 ## Struktur project
 
@@ -118,67 +220,3 @@ joki/
 ├─ sql/
 └─ uploads/
 ```
-
-## Detail teknis
-
-<details>
-<summary>Folder penting</summary>
-
-```text
-src/
-├─ app.jsx
-├─ shell.jsx
-├─ i18n.js
-├─ seed.js
-├─ pages-a.jsx
-├─ pages-b.jsx
-├─ pages-c.jsx
-└─ pages-admin.jsx
-
-api/
-├─ config.php
-├─ db.php
-├─ bootstrap.php
-├─ contact.php
-├─ ppdb.php
-├─ login.php
-├─ logout.php
-├─ me.php
-├─ _session.php
-└─ admin/
-   ├─ stats.php
-   ├─ messages.php
-   ├─ registrations.php
-   ├─ news.php
-   ├─ gallery.php
-   ├─ upload.php
-   ├─ settings.php
-   ├─ programs.php
-   ├─ teachers.php
-   └─ albums.php
-
-sql/
-├─ schema.sql
-├─ seed.sql
-└─ reset_baseline.php
-```
-
-</details>
-
-<details>
-<summary>Test endpoint cepat</summary>
-
-```bash
-curl -s http://localhost:8000/api/bootstrap.php | head -c 400
-curl -s -X POST http://localhost:8000/api/contact.php \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Budi","email":"budi@example.com","subject":"Test","message":"Halo dari curl"}'
-```
-
-PowerShell:
-
-```powershell
-(Invoke-WebRequest http://localhost:8000/api/bootstrap.php).Content
-```
-
-</details>
