@@ -28,6 +28,9 @@ $settings = $settingsRow ? [
     'hours_id'   => $settingsRow['hours_id'],
     'hours_en'   => $settingsRow['hours_en'],
     'logo_path'  => $settingsRow['logo_path'],
+    'map_lat'    => ($settingsRow['map_lat'] ?? null) !== null ? (float)$settingsRow['map_lat'] : null,
+    'map_lng'    => ($settingsRow['map_lng'] ?? null) !== null ? (float)$settingsRow['map_lng'] : null,
+    'map_zoom'   => ($settingsRow['map_zoom'] ?? null) !== null ? (int)$settingsRow['map_zoom'] : null,
     'maps_embed_url' => $settingsRow['maps_embed_url'],
 ] : null;
 

@@ -268,12 +268,31 @@
   overflow: hidden;
   box-shadow: var(--sh-2);
 }
-.leaflet-map {
+.leaflet-map,
+.map-fallback {
   width: 100%;
   height: 420px;
   display: block;
   background: oklch(0.94 0.015 85);
   z-index: 0;
+}
+.map-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px;
+  text-align: center;
+}
+.map-fallback strong {
+  font-family: var(--f-display);
+  font-size: 22px;
+}
+.map-fallback span {
+  max-width: 360px;
+  color: var(--ink-muted);
+  line-height: 1.5;
 }
 .map-action-row { display: flex; justify-content: flex-end; margin-top: 12px; }
 .map-caption {
@@ -294,7 +313,8 @@
 .map-caption span { color: var(--ink-muted); font-size: 12px; line-height: 1.4; }
 .map-caption .btn { align-self: flex-start; margin-top: 4px; }
 @media (max-width: 560px) {
-  .map-embed { height: 320px; }
+  .leaflet-map,
+  .map-fallback { height: 320px; }
   .map-caption { position: static; max-width: none; border-radius: 0; border: 0; border-top: 2px solid var(--ink); box-shadow: none; }
 }
 
@@ -1005,6 +1025,29 @@
 .upload-area { position: relative; }
 .upload-area .placeholder { border: 2px dashed var(--ink); border-radius: var(--r-lg); cursor: pointer; }
 .upload-hint { text-align: center; padding: 8px 0; font-family: var(--f-mono); font-size: 11px; color: var(--ink-muted); }
+.settings-map-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-map-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.settings-map-copy strong {
+  font-family: var(--f-display);
+  font-size: 18px;
+}
+.settings-map-copy span {
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.settings-map-preview .leaflet-map,
+.settings-map-preview .map-fallback {
+  height: 300px;
+}
 .settings-logo-upload {
   border: 2px dashed var(--line);
   border-radius: var(--r-lg);

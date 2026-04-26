@@ -8,27 +8,33 @@
  * 3. environment variable `PAUD_*` (override final / one-off)
  */
 
-function cfgEnvHas(string $key): bool
-{
-    return getenv($key) !== false;
-}
-
-function cfgEnvValue(string $key, mixed $fallback): mixed
-{
-    return cfgEnvHas($key) ? getenv($key) : $fallback;
-}
-
-function cfgEnvBool(string $key, bool $fallback): bool
-{
-    if (!cfgEnvHas($key)) {
-        return $fallback;
+if (!function_exists('cfgEnvHas')) {
+    function cfgEnvHas(string $key): bool
+    {
+        return getenv($key) !== false;
     }
+}
 
-    return in_array(
-        strtolower((string)getenv($key)),
-        ['1', 'true', 'yes', 'on'],
-        true
-    );
+if (!function_exists('cfgEnvValue')) {
+    function cfgEnvValue(string $key, mixed $fallback): mixed
+    {
+        return cfgEnvHas($key) ? getenv($key) : $fallback;
+    }
+}
+
+if (!function_exists('cfgEnvBool')) {
+    function cfgEnvBool(string $key, bool $fallback): bool
+    {
+        if (!cfgEnvHas($key)) {
+            return $fallback;
+        }
+
+        return in_array(
+            strtolower((string)getenv($key)),
+            ['1', 'true', 'yes', 'on'],
+            true
+        );
+    }
 }
 
 $config = [

@@ -50,6 +50,9 @@ CREATE TABLE settings (
     hours_id        VARCHAR(120),
     hours_en        VARCHAR(120),
     logo_path       VARCHAR(255),
+    map_lat         NUMERIC(10,7),
+    map_lng         NUMERIC(10,7),
+    map_zoom        SMALLINT DEFAULT 16,
     maps_embed_url  TEXT,
     CONSTRAINT settings_single_row CHECK (id = 1)
 );

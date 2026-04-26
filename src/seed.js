@@ -14,7 +14,10 @@ window.SEED = {
     email: "halo@paudcemara.id",
     hours_id: "Senin–Jumat · 07.30–13.30",
     hours_en: "Mon–Fri · 07.30–13.30",
-    maps_embed_url: "https://www.openstreetmap.org/export/embed.html?bbox=112.575%2C-7.925%2C112.595%2C-7.912&layer=mapnik&marker=-7.9186%2C112.5841",
+    map_lat: -7.957565,
+    map_lng: 112.5868833,
+    map_zoom: 16,
+    maps_embed_url: "https://www.openstreetmap.org/export/embed.html?bbox=112.5768833%2C-7.964565%2C112.5968833%2C-7.950565&layer=mapnik&marker=-7.957565%2C112.5868833",
   },
 
   stats: [

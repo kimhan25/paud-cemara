@@ -416,16 +416,19 @@ function ContactPage() {
           </form>
         </div>
 
-        {/* Map — Leaflet (JavaScript Maps API, tile dari OpenStreetMap) */}
-        <LeafletMap
-          lat={-7.9186}
-          lng={112.5841}
+        {/* Map */}
+        <LocationMap
+          mapLat={settings.map_lat}
+          mapLng={settings.map_lng}
+          mapZoom={settings.map_zoom}
+          legacyMapUrl={settings.maps_embed_url}
           label={settings.schoolName || 'PAUD Cemara'}
           address={settings.address}
+          lang={lang}
         />
         <div className="map-action-row">
           <a className="btn sm" target="_blank" rel="noopener"
-             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address || 'Universitas Ma Chung Malang')}`}>
+             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(buildMapSearchQuery(settings))}`}>
             {lang === 'id' ? 'Buka di Google Maps' : 'Open in Google Maps'} ↗
           </a>
         </div>
@@ -434,31 +437,191 @@ function ContactPage() {
   );
 }
 
-/* =================== Leaflet map component =================== */
-function LeafletMap({ lat, lng, label, address }) {
+function buildMapSearchQuery(settings) {
+  const parts = [settings.schoolName, settings.address]
+    .map(v => String(v || '').trim())
+    .filter(Boolean);
+  return parts.join(', ') || 'PAUD Cemara';
+}
+
+function normalizeMapUrl(rawUrl) {
+  const value = String(rawUrl || '').trim();
+  if (!value) return '';
+  try {
+    const url = new URL(value, window.location.href);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+    return url.toString();
+  } catch (_) {
+    return '';
+  }
+}
+
+function parseNumberValue(rawValue) {
+  if (rawValue === null || rawValue === undefined || rawValue === '') return null;
+  const value = Number(rawValue);
+  return Number.isFinite(value) ? value : null;
+}
+
+function parseCoordinatePair(rawValue) {
+  const value = String(rawValue || '').trim();
+  if (!value) return null;
+  const parts = value.split(',').map(v => Number(v.trim()));
+  if (parts.length < 2 || parts.some(v => Number.isNaN(v))) return null;
+  return { lat: parts[0], lng: parts[1] };
+}
+
+function parseBboxCenter(rawValue) {
+  const value = String(rawValue || '').trim();
+  if (!value) return null;
+  const parts = value.split(',').map(v => Number(v.trim()));
+  if (parts.length !== 4 || parts.some(v => Number.isNaN(v))) return null;
+  return {
+    lat: (parts[1] + parts[3]) / 2,
+    lng: (parts[0] + parts[2]) / 2,
+  };
+}
+
+function parseLegacyMapConfig(rawUrl) {
+  const mapUrl = normalizeMapUrl(rawUrl);
+  if (!mapUrl) return null;
+
+  try {
+    const url = new URL(mapUrl, window.location.href);
+    const zoomCandidate = Number(url.searchParams.get('z') || url.searchParams.get('zoom') || 16);
+    const zoom = Number.isFinite(zoomCandidate) && zoomCandidate > 0 ? zoomCandidate : 16;
+
+    const coordinateCandidates = [
+      url.searchParams.get('marker'),
+      url.searchParams.get('ll'),
+      url.searchParams.get('center'),
+      url.searchParams.get('query'),
+      url.searchParams.get('q'),
+    ];
+    for (const candidate of coordinateCandidates) {
+      const pair = parseCoordinatePair(candidate);
+      if (pair) return { ...pair, zoom };
+    }
+
+    const bboxCenter = parseBboxCenter(url.searchParams.get('bbox'));
+    if (bboxCenter) return { ...bboxCenter, zoom };
+
+    const decodedUrl = decodeURIComponent(mapUrl);
+    const patterns = [
+      /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,([0-9.]+)z)?/i,
+      /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/i,
+      /marker=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = decodedUrl.match(pattern);
+      if (!match) continue;
+      const lat = Number(match[1]);
+      const lng = Number(match[2]);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+      const matchedZoom = Number(match[3] || zoom);
+      return {
+        lat,
+        lng,
+        zoom: Number.isFinite(matchedZoom) && matchedZoom > 0 ? matchedZoom : zoom,
+      };
+    }
+  } catch (_) {
+    return null;
+  }
+
+  return null;
+}
+
+function resolveMapConfig({ mapLat, mapLng, mapZoom, legacyMapUrl }) {
+  const lat = parseNumberValue(mapLat);
+  const lng = parseNumberValue(mapLng);
+  const zoomValue = parseNumberValue(mapZoom);
+
+  if (lat !== null && lng !== null) {
+    return {
+      lat,
+      lng,
+      zoom: zoomValue !== null && zoomValue > 0 ? zoomValue : 16,
+    };
+  }
+
+  return parseLegacyMapConfig(legacyMapUrl);
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+/* =================== Map component =================== */
+function LocationMap({ mapLat, mapLng, mapZoom, legacyMapUrl, label, address, lang }) {
   const ref = useRef(null);
   const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
+  const mapConfig = resolveMapConfig({ mapLat, mapLng, mapZoom, legacyMapUrl });
 
   useEffect(() => {
-    if (!window.L || !ref.current) return;
-    if (mapInstance.current) return;
+    if (!window.L || !ref.current || !mapConfig) return;
 
-    const map = window.L.map(ref.current, { scrollWheelZoom: false }).setView([lat, lng], 16);
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
-    window.L.marker([lat, lng]).addTo(map)
-      .bindPopup(`<strong>${label}</strong><br>${address || ''}`)
+    if (!mapInstance.current) {
+      const map = window.L.map(ref.current, { scrollWheelZoom: false }).setView([mapConfig.lat, mapConfig.lng], mapConfig.zoom);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      mapInstance.current = map;
+    }
+
+    const map = mapInstance.current;
+    map.setView([mapConfig.lat, mapConfig.lng], mapConfig.zoom);
+
+    const popupHtml = `<strong>${escapeHtml(label)}</strong><br>${escapeHtml(address)}`;
+    if (!markerInstance.current) {
+      markerInstance.current = window.L.marker([mapConfig.lat, mapConfig.lng]).addTo(map);
+    } else {
+      markerInstance.current.setLatLng([mapConfig.lat, mapConfig.lng]);
+    }
+
+    markerInstance.current
+      .bindPopup(popupHtml)
       .openPopup();
 
-    mapInstance.current = map;
-    return () => { map.remove(); mapInstance.current = null; };
-  }, [lat, lng, label, address]);
+    // Leaflet menghitung ukuran saat elemen terlihat.
+    setTimeout(() => map.invalidateSize(), 0);
+  }, [mapConfig?.lat, mapConfig?.lng, mapConfig?.zoom, label, address]);
+
+  useEffect(() => {
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+        markerInstance.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="map-wrap">
-      <div ref={ref} className="leaflet-map" aria-label="Peta lokasi sekolah"/>
+      {mapConfig ? (
+        <div
+          ref={ref}
+          className="leaflet-map"
+          aria-label="Peta lokasi sekolah"
+        />
+      ) : (
+        <div className="map-fallback" role="img" aria-label="Peta lokasi sekolah belum diatur">
+          <strong>{lang === 'id' ? 'Lokasi peta belum valid' : 'Map location is not valid yet'}</strong>
+          <span>
+            {lang === 'id'
+              ? 'Isi latitude, longitude, dan zoom di panel admin agar lokasi tampil akurat.'
+              : 'Set the latitude, longitude, and zoom in the admin panel to show the exact location.'}
+          </span>
+        </div>
+      )}
       <div className="map-caption">
         <strong>{label}</strong>
         <span>{address}</span>

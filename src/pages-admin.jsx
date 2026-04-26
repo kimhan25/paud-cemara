@@ -214,6 +214,103 @@ function adminDisplayName(value) {
     .replace(/\b\w/g, char => char.toUpperCase());
 }
 
+function parseAdminMapNumber(rawValue) {
+  if (rawValue === null || rawValue === undefined || rawValue === '') return null;
+  const value = Number(rawValue);
+  return Number.isFinite(value) ? value : null;
+}
+
+function resolveAdminMapPreview(form) {
+  const lat = parseAdminMapNumber(form?.map_lat);
+  const lng = parseAdminMapNumber(form?.map_lng);
+  const zoom = parseAdminMapNumber(form?.map_zoom) ?? 16;
+
+  if (lat === null || lng === null) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+  return {
+    lat,
+    lng,
+    zoom: Math.min(20, Math.max(1, Math.round(zoom))),
+  };
+}
+
+function AdminSettingsMapPreview({ form, label, address, lang }) {
+  const ref = useRef(null);
+  const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
+  const config = resolveAdminMapPreview(form);
+
+  useEffect(() => {
+    if (!window.L || !ref.current || !config) return;
+
+    if (!mapInstance.current) {
+      const map = window.L.map(ref.current, { scrollWheelZoom: false }).setView([config.lat, config.lng], config.zoom);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      mapInstance.current = map;
+    }
+
+    const map = mapInstance.current;
+    map.setView([config.lat, config.lng], config.zoom);
+
+    if (!markerInstance.current) {
+      markerInstance.current = window.L.marker([config.lat, config.lng]).addTo(map);
+    } else {
+      markerInstance.current.setLatLng([config.lat, config.lng]);
+    }
+
+    markerInstance.current
+      .bindPopup(`<strong>${String(label || '').replaceAll('<', '&lt;')}</strong><br>${String(address || '').replaceAll('<', '&lt;')}`)
+      .openPopup();
+
+    setTimeout(() => map.invalidateSize(), 0);
+  }, [config?.lat, config?.lng, config?.zoom, label, address]);
+
+  useEffect(() => {
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+        markerInstance.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <div className="settings-map-section">
+      <div className="settings-map-copy">
+        <strong>{lang === 'id' ? 'Preview peta' : 'Map preview'}</strong>
+        <span>
+          {lang === 'id'
+            ? 'Preview ini memakai Leaflet API yang sama dengan halaman publik.'
+            : 'This preview uses the same Leaflet API configuration as the public page.'}
+        </span>
+      </div>
+      <div className="map-wrap settings-map-preview">
+        {config ? (
+          <div ref={ref} className="leaflet-map" aria-label={lang === 'id' ? 'Preview peta sekolah' : 'School map preview'}/>
+        ) : (
+          <div className="map-fallback" role="img" aria-label={lang === 'id' ? 'Preview peta belum valid' : 'Map preview is not valid yet'}>
+            <strong>{lang === 'id' ? 'Koordinat belum valid' : 'Coordinates are not valid yet'}</strong>
+            <span>
+              {lang === 'id'
+                ? 'Isi latitude dan longitude yang benar untuk menampilkan preview lokasi sekolah.'
+                : 'Enter a valid latitude and longitude to preview the school location.'}
+            </span>
+          </div>
+        )}
+        <div className="map-caption">
+          <strong>{label || 'PAUD Cemara'}</strong>
+          <span>{address}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminPage() {
   const [s] = useStore();
   const [checked, setChecked] = useState(false);
@@ -269,11 +366,22 @@ function AdminLogin() {
         setErr(data.error || (lang === 'id' ? 'Login gagal' : 'Login failed'));
         return;
       }
+
+      let username = data?.user?.username || '';
+      if (!username) {
+        const meRes = await fetch('api/me.php', { credentials: 'same-origin' });
+        const meData = await meRes.json().catch(() => ({}));
+        if (!meRes.ok || !meData?.user?.username) {
+          throw new Error(lang === 'id' ? 'Login berhasil tetapi sesi tidak dapat diverifikasi.' : 'Login succeeded but the session could not be verified.');
+        }
+        username = meData.user.username;
+      }
+
       sessionStorage.setItem('paud:admin', '1');
-      store.set(ss => ({ ...ss, admin: { ...ss.admin, loggedIn: true, email: data.user.username } }));
+      store.set(ss => ({ ...ss, admin: { ...ss.admin, loggedIn: true, email: username } }));
       showToast(lang === 'id' ? 'Selamat datang!' : 'Welcome!');
     } catch (ex) {
-      setErr(lang === 'id' ? 'Kesalahan jaringan' : 'Network error');
+      setErr(ex?.message || (lang === 'id' ? 'Kesalahan jaringan' : 'Network error'));
     } finally {
       setLoading(false);
     }
@@ -1964,10 +2072,40 @@ function AdminSettings() {
           <FormField label={lang === 'id' ? 'Jam operasional (ID)' : 'Hours (ID)'}><input value={form.hours_id || ''} onChange={e => setForm(f => ({ ...f, hours_id: e.target.value }))}/></FormField>
           <FormField label={lang === 'id' ? 'Jam operasional (EN)' : 'Hours (EN)'}><input value={form.hours_en || ''} onChange={e => setForm(f => ({ ...f, hours_en: e.target.value }))}/></FormField>
         </div>
-        <FormField label={lang === 'id' ? 'URL embed Google Maps' : 'Google Maps embed URL'}>
-          <input value={form.maps_embed_url || ''} onChange={e => setForm(f => ({ ...f, maps_embed_url: e.target.value }))}
-                 placeholder="https://www.google.com/maps/embed?pb=…"/>
-        </FormField>
+        <div className="form-grid">
+          <FormField label="Latitude">
+            <input
+              value={form.map_lat ?? ''}
+              onChange={e => setForm(f => ({ ...f, map_lat: e.target.value }))}
+              placeholder="-7.9575650"/>
+          </FormField>
+          <FormField label="Longitude">
+            <input
+              value={form.map_lng ?? ''}
+              onChange={e => setForm(f => ({ ...f, map_lng: e.target.value }))}
+              placeholder="112.5868833"/>
+          </FormField>
+          <FormField label="Zoom">
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={form.map_zoom ?? 16}
+              onChange={e => setForm(f => ({ ...f, map_zoom: e.target.value }))}
+              placeholder="16"/>
+          </FormField>
+        </div>
+        <div className="upload-hint" style={{ textAlign: 'left', paddingTop: 0 }}>
+          {lang === 'id'
+            ? 'Peta publik memakai Leaflet API. Ubah koordinat agar marker dan pusat peta mengikuti lokasi sekolah.'
+            : 'The public map uses the Leaflet API. Update the coordinates to move the marker and map center to the school location.'}
+        </div>
+        <AdminSettingsMapPreview
+          form={form}
+          label={form.schoolName || 'PAUD Cemara'}
+          address={form.address}
+          lang={lang}
+        />
       </div>
     </div>
   );

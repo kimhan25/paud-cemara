@@ -5,7 +5,7 @@
 -- =====================================================================
 
 -- Settings -----------------------------------------------------------
-INSERT INTO settings (id, school_name, tagline_id, tagline_en, address, phone, whatsapp, email, hours_id, hours_en, logo_path, maps_embed_url)
+INSERT INTO settings (id, school_name, tagline_id, tagline_en, address, phone, whatsapp, email, hours_id, hours_en, logo_path, map_lat, map_lng, map_zoom, maps_embed_url)
 VALUES (1,
     'PAUD Cemara',
     'Taman tempat anak belajar menjadi diri sendiri.',
@@ -17,7 +17,10 @@ VALUES (1,
     'Senin–Jumat · 07.30–13.30',
     'Mon–Fri · 07.30–13.30',
     NULL,
-    'https://www.openstreetmap.org/export/embed.html?bbox=112.575%2C-7.925%2C112.595%2C-7.912&layer=mapnik&marker=-7.9186%2C112.5841'
+    -7.9575650,
+    112.5868833,
+    16,
+    'https://www.openstreetmap.org/export/embed.html?bbox=112.5768833%2C-7.964565%2C112.5968833%2C-7.950565&layer=mapnik&marker=-7.957565%2C112.5868833'
 );
 
 -- Hero stats ---------------------------------------------------------
