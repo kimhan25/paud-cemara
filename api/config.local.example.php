@@ -16,7 +16,9 @@ return [
     ],
 
     'cors_origin' => '',
-    'debug' => true,
+    // Untuk production sebaiknya tetap false.
+    // Ubah ke true hanya saat perlu debugging sementara.
+    'debug' => false,
     // Harus menunjuk ke folder public `uploads/` yang benar-benar dilayani web server.
     'upload_dir' => __DIR__ . '/../uploads',
     'session_name' => 'paud_admin_sess',

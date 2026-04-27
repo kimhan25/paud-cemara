@@ -3,63 +3,193 @@
 Website profil sekolah PAUD dengan halaman publik, panel admin, backend PHP,
 dan database PostgreSQL.
 
-**Stack:** HTML + React (via CDN) · PHP murni + PDO · PostgreSQL · tanpa build
-step frontend.
+Stack yang dipakai:
 
-## Dokumentasi
+- HTML + React via CDN
+- PHP murni + PDO
+- PostgreSQL
+- tanpa build step frontend
 
-README ini ditulis untuk setup:
+## Dokumen ini untuk apa
 
-- Windows native
+README ini ditulis untuk setup lokal di:
+
+- Windows
 - PostgreSQL Desktop / PostgreSQL installer
 - pgAdmin 4
 - PHP CLI
+- Git
 
 Dokumen lain:
 
 - [`DEPLOY.md`](DEPLOY.md): panduan deploy ke server / VPS
-- `Dockerfile`: opsi deploy berbasis container, tidak dipakai untuk local setup Windows
+- `Dockerfile`: opsi deploy berbasis container
 
-## Fitur utama
+## Hasil akhir yang diharapkan
 
-- halaman publik untuk profil sekolah, program, galeri, berita, kontak, dan PPDB
-- panel admin dengan login berbasis session
-- CRUD berita, galeri, album, program, guru/staf, dan pengaturan sekolah
-- upload gambar ke folder lokal `uploads/`
-- form `Kontak` dan `PPDB` tersimpan ke PostgreSQL
+Setelah semua langkah selesai:
 
-## Quick Start untuk Windows + PostgreSQL Desktop
+- website bisa dibuka di `http://localhost:8000`
+- panel admin bisa dibuka di `http://localhost:8000/#/admin`
+- data website dibaca dari PostgreSQL lokal
+- upload gambar tersimpan di folder `uploads/`
 
-### 1. Buka project di PowerShell
+## File yang penting
 
-Contoh:
+- `api/config.php`
+  File config utama project. Tidak perlu diubah untuk setup biasa.
+- `api/config.local.php`
+  File config lokal per mesin. File ini tidak masuk Git dan aman untuk diisi password database.
+- `api/config.local.example.php`
+  Template untuk membuat `api/config.local.php`.
+- `sql/schema.sql`
+  Membuat ulang struktur database dari nol.
+- `sql/seed.sql`
+  Mengisi data awal / contoh ke database.
+- `uploads/`
+  Tempat file gambar yang di-upload dari admin.
+
+## Peringatan penting sebelum mulai
+
+- `sql/schema.sql` hanya untuk database baru / kosong
+- `sql/seed.sql` hanya untuk isi awal / reset data contoh
+- jangan jalankan `schema.sql` atau `seed.sql` pada database yang sudah berisi data penting, kecuali memang ingin mengulang dari nol
+- jangan isi password database di `api/config.php`
+- isi config mesin lokal di `api/config.local.php`
+
+## 1. Install Git
+
+Cek dulu:
 
 ```powershell
-cd C:\path\ke\project\paud-cemara
+git --version
 ```
 
-### 2. Jika PHP belum terpasang, install PHP CLI
+Kalau muncul versi Git, lanjut ke langkah berikutnya.
 
-Cara paling aman untuk project ini:
+Kalau `git` tidak dikenali:
 
-1. Download PHP 8.2 atau 8.3 untuk Windows dari situs resmi PHP
+1. Install Git for Windows
+2. Tutup PowerShell
+3. Buka PowerShell lagi
+4. Jalankan lagi `git --version`
+
+## 2. Download project dari GitHub
+
+Buat folder kerja, contoh:
+
+```powershell
+mkdir C:\projects
+cd C:\projects
+```
+
+Clone project:
+
+```powershell
+git clone <URL_REPO_GITHUB>
+cd paud-cemara
+```
+
+Contoh `URL_REPO_GITHUB`:
+
+```text
+https://github.com/username/paud-cemara.git
+```
+
+Cara mengambil URL repo:
+
+1. Buka halaman repo di GitHub
+2. Klik tombol `Code`
+3. Pilih `HTTPS`
+4. Copy URL yang muncul
+
+Catatan:
+
+- jika project diambil dengan `git clone`, update berikutnya bisa memakai `git pull`
+- jika project hanya di-download sebagai ZIP, `git pull` tidak bisa dipakai
+
+Setelah ini, semua command berikutnya dijalankan dari folder project:
+
+```powershell
+cd C:\projects\paud-cemara
+```
+
+## 3. Jika nanti ada update project dari GitHub
+
+Masuk ke folder project:
+
+```powershell
+cd C:\projects\paud-cemara
+```
+
+Tarik update:
+
+```powershell
+git pull
+```
+
+Catatan:
+
+- hentikan server lokal PHP dulu sebelum `git pull`
+- jangan simpan perubahan lokal di file tracked kalau tidak perlu
+- untuk config lokal, pakai `api/config.local.php`
+- untuk gambar upload, biarkan tetap di folder `uploads/`
+- kalau `git pull` menampilkan conflict, jangan lanjut sembarang. Simpan backup dulu lalu cek file yang bentrok
+
+## 4. Install PostgreSQL Desktop dan pgAdmin
+
+Cek dulu:
+
+```powershell
+psql --version
+Get-Service *postgres*
+```
+
+Yang diharapkan:
+
+- `psql --version` menampilkan versi PostgreSQL
+- service PostgreSQL berstatus `Running`
+
+Kalau belum ada:
+
+1. Install PostgreSQL untuk Windows
+2. Pastikan `pgAdmin 4` ikut terpasang
+3. Simpan username dan password `postgres` saat instalasi
+4. Setelah instalasi selesai, buka PowerShell baru
+5. Jalankan lagi:
+
+```powershell
+psql --version
+Get-Service *postgres*
+```
+
+Kalau service belum berjalan, nyalakan dari aplikasi `Services` di Windows.
+
+## 5. Install PHP CLI
+
+Cek dulu:
+
+```powershell
+php -v
+```
+
+Kalau `php` belum dikenali, install PHP CLI.
+
+Cara yang aman:
+
+1. Download PHP 8.2 atau 8.3 untuk Windows
 2. Extract ke folder tetap, misalnya `C:\php`
 3. Copy `php.ini-development` menjadi `php.ini`
-4. Pastikan extension berikut aktif di `php.ini`:
+4. Aktifkan extension berikut di `php.ini`:
    - `extension=pdo_pgsql`
    - `extension=pgsql`
    - `extension=mbstring`
    - `extension=fileinfo`
-5. Tambahkan `C:\php` ke `PATH` Windows
-6. Tutup lalu buka ulang PowerShell
+5. Tambahkan `C:\php` ke `PATH`
+6. Tutup PowerShell
+7. Buka PowerShell lagi
 
-Jika ingin lebih sederhana, install PHP lewat installer/tool yang memang menyediakan
-`php.exe` untuk command line. Yang penting hasil akhirnya adalah command `php`
-bisa dipanggil dari PowerShell dan extension di bawah aktif.
-
-### 3. Pastikan PHP CLI siap
-
-Jalankan:
+Cek hasilnya:
 
 ```powershell
 php -v
@@ -76,24 +206,15 @@ Yang harus tersedia:
 - `mbstring`
 - `fileinfo`
 
-Jika `php` tidak dikenali, periksa instalasi PHP dan `PATH`.
+## 6. Buat database lokal
 
-### 4. Pastikan PostgreSQL Desktop siap
+Nama database yang dipakai project:
 
-Jalankan:
-
-```powershell
-psql --version
-Get-Service *postgres*
+```text
+paud_cemara
 ```
 
-Service PostgreSQL harus berstatus `Running`.
-
-Jika belum aktif, nyalakan dari aplikasi `Services` di Windows.
-
-### 5. Buat database `paud_cemara`
-
-Opsi `pgAdmin`:
+Opsi lewat `pgAdmin`:
 
 1. Buka `pgAdmin 4`
 2. Login ke server PostgreSQL lokal
@@ -101,29 +222,33 @@ Opsi `pgAdmin`:
 4. Pilih `Create > Database...`
 5. Isi nama database: `paud_cemara`
 
-Opsi `psql`:
+Opsi lewat `psql`:
 
 ```powershell
 createdb -h localhost -p 5432 -U postgres paud_cemara
 ```
 
-### 6. Import schema dan seed
+## 7. Import schema dan seed
 
-Opsi `pgAdmin`:
+Langkah ini hanya untuk setup pertama pada database baru.
+
+Opsi lewat `pgAdmin`:
 
 1. Klik database `paud_cemara`
 2. Buka `Tools > Query Tool`
-3. Buka file `sql/schema.sql`, lalu jalankan seluruh isinya
-4. Setelah selesai, jalankan isi file `sql/seed.sql`
+3. Buka file `sql/schema.sql`
+4. Jalankan seluruh isi `sql/schema.sql`
+5. Setelah selesai, buka file `sql/seed.sql`
+6. Jalankan seluruh isi `sql/seed.sql`
 
-Opsi `psql`:
+Opsi lewat `psql`:
 
 ```powershell
 psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql\schema.sql
 psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql\seed.sql
 ```
 
-### 7. Buat config lokal
+## 8. Buat config lokal
 
 Copy file contoh:
 
@@ -131,7 +256,21 @@ Copy file contoh:
 Copy-Item api\config.local.example.php api\config.local.php
 ```
 
-Lalu edit `api/config.local.php` dan isi koneksi database lokal.
+Lalu edit file `api/config.local.php`.
+
+File ini bisa dibuka dengan:
+
+- Notepad
+- VS Code
+- editor teks lain yang biasa dipakai
+
+Yang biasanya cukup diubah:
+
+- `host`
+- `port`
+- `dbname`
+- `user`
+- `password`
 
 Contoh minimal:
 
@@ -149,36 +288,62 @@ return [
 ];
 ```
 
-Catatan penting:
+Catatan:
 
-- project default memakai port `5433` di `api/config.php`
-- PostgreSQL Desktop di Windows biasanya memakai port `5432`
-- jika PostgreSQL lokal memakai port lain, sesuaikan di `api/config.local.php`
+- default project di `api/config.php` memakai port `5433`
+- PostgreSQL Windows biasanya memakai port `5432`
+- karena itu, `api/config.local.php` hampir selalu perlu diisi port `5432`
 
-### 8. Buat akun admin
+## 9. Buat akun admin
+
+Jalankan:
 
 ```powershell
 php sql\make_admin.php admin PasswordKuat123
 ```
 
-### 9. Jalankan aplikasi
+Kalau berhasil, akun admin `admin` sudah siap dipakai login.
+
+## 10. Jalankan aplikasi
+
+Jalankan server lokal:
 
 ```powershell
 php -S localhost:8000
 ```
 
-Buka:
+Buka di browser:
 
 - `http://localhost:8000`
 - `http://localhost:8000/#/admin`
 
-## Verifikasi cepat
+Untuk menghentikan server lokal:
+
+```text
+Ctrl + C
+```
+
+Kalau port `8000` sudah dipakai:
+
+```powershell
+php -S localhost:8080
+```
+
+Lalu buka:
+
+- `http://localhost:8080`
+- `http://localhost:8080/#/admin`
+
+## 11. Cek bahwa setup berhasil
 
 Di browser:
 
-- `http://localhost:8000`
-- `http://localhost:8000/api/bootstrap.php`
-- `http://localhost:8000/#/admin`
+1. Buka `http://localhost:8000`
+2. Pastikan halaman utama tampil
+3. Buka `http://localhost:8000/api/bootstrap.php`
+4. Pastikan tampil JSON, bukan error
+5. Buka `http://localhost:8000/#/admin`
+6. Login dengan akun admin yang dibuat tadi
 
 Di PowerShell:
 
@@ -187,57 +352,72 @@ Di PowerShell:
 psql -h localhost -p 5432 -U postgres -d paud_cemara -c "SELECT username FROM admin_user;"
 ```
 
-## Jika ada error
+Yang diharapkan:
 
-- `php` tidak dikenali:
-  cek instalasi PHP dan `PATH`
-- `psql` tidak dikenali:
-  cek instalasi PostgreSQL dan `PATH`
-- `Database connection failed`:
-  cek `api/config.local.php`, user/password, port, dan status service PostgreSQL
-- halaman tampil tapi data tidak berubah:
-  cek `http://localhost:8000/api/bootstrap.php` karena frontend bisa fallback ke `src/seed.js`
+- endpoint `bootstrap.php` mengembalikan JSON
+- tabel `admin_user` berisi username admin
 
-## Endpoint utama
+## 12. Hal yang perlu diingat setelah setup berhasil
 
-- `GET /api/bootstrap.php`
-- `POST /api/contact.php`
-- `POST /api/ppdb.php`
-- `POST /api/login.php`
-- `POST /api/logout.php`
-- `GET /api/me.php`
+- `api/config.local.php` adalah file config lokal. Simpan file ini, jangan hapus sembarang
+- `uploads/` menyimpan file gambar hasil upload
+- kalau project dipindah ke komputer atau server lain, yang harus ikut dibawa adalah:
+  - database PostgreSQL
+  - folder `uploads/`
+  - file `api/config.local.php` atau data koneksi databasenya
 
-Endpoint admin:
+## Troubleshooting
 
-- `GET /api/admin/stats.php`
-- `GET/POST/DELETE /api/admin/messages.php`
-- `GET/POST/DELETE /api/admin/registrations.php`
-- `GET/POST/PUT/DELETE /api/admin/news.php`
-- `GET/POST/PUT/DELETE /api/admin/gallery.php`
-- `POST /api/admin/upload.php`
-- `GET/PUT /api/admin/settings.php`
-- `GET/POST/PUT/DELETE /api/admin/programs.php`
-- `GET/POST/PUT/DELETE /api/admin/teachers.php`
-- `GET/POST/PUT/DELETE /api/admin/albums.php`
+### `git` tidak dikenali
+
+Install Git for Windows lalu buka ulang PowerShell.
+
+### `php` tidak dikenali
+
+Periksa instalasi PHP dan `PATH`.
+
+### `psql` tidak dikenali
+
+Periksa instalasi PostgreSQL dan `PATH`.
+
+### `Database connection failed`
+
+Cek:
+
+- isi `api/config.local.php`
+- host
+- port
+- username
+- password
+- status service PostgreSQL
+
+### Website tampil, tapi datanya tidak berubah
+
+Cek:
+
+- `http://localhost:8000/api/bootstrap.php`
+- apakah `api/config.local.php` sudah benar
+- apakah database `paud_cemara` memang sudah diisi `schema.sql` dan `seed.sql`
+
+### Login admin gagal
+
+Cek:
+
+- akun admin sudah dibuat dengan `php sql\make_admin.php`
+- password yang dimasukkan benar
+- browser mengizinkan cookie untuk `localhost`
+
+### Port `8000` sudah dipakai
+
+Gunakan port lain:
+
+```powershell
+php -S localhost:8080
+```
 
 ## Catatan repo
 
-- `uploads/` hanya menyimpan placeholder di repo
-- file gambar yang sudah di-upload tersimpan sebagai file fisik di `uploads/`
-- saat pindah ke server lain, copy folder `uploads/` bersama database PostgreSQL
-- untuk Docker atau platform container, `uploads/` harus dipasang ke storage persisten
-- file upload asli tidak perlu di-commit
-- `api/config.local.php`, `.env`, dan kredensial lokal tidak masuk repo
-- environment variable `PAUD_*` bisa dipakai untuk override sementara
-
-## Struktur project
-
-```text
-project-root/
-├─ index.html
-├─ src/
-├─ styles/
-├─ api/
-├─ sql/
-└─ uploads/
-```
+- `api/config.local.php` tidak masuk Git
+- file upload asli tidak masuk Git
+- `uploads/` di repo hanya berisi placeholder
+- `api/config.php` tidak perlu diubah untuk setup biasa
