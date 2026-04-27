@@ -55,7 +55,7 @@ $config = [
     // Production sebaiknya biarkan OFF.
     'debug' => false,
 
-    // Upload directory (path relatif dari project root)
+    // Upload directory (path fisik ke folder public `/uploads`)
     'upload_dir'  => __DIR__ . '/../uploads',
 
     // Session cookie name
@@ -88,6 +88,7 @@ $config['db']['sslmode'] = (string)cfgEnvValue('PAUD_DB_SSLMODE', $config['db'][
 
 $config['cors_origin'] = (string)cfgEnvValue('PAUD_CORS_ORIGIN', $config['cors_origin']);
 $config['debug'] = cfgEnvBool('PAUD_DEBUG', (bool)$config['debug']);
+$config['upload_dir'] = (string)cfgEnvValue('PAUD_UPLOAD_DIR', $config['upload_dir']);
 $config['trust_proxy'] = cfgEnvBool('PAUD_TRUST_PROXY', (bool)$config['trust_proxy']);
 $config['force_secure_session'] = cfgEnvBool('PAUD_SESSION_SECURE', (bool)$config['force_secure_session']);
 $config['rate_limit_dir'] = (string)cfgEnvValue('PAUD_RATE_LIMIT_DIR', $config['rate_limit_dir']);

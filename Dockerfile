@@ -17,7 +17,7 @@ RUN a2enmod rewrite headers deflate
 COPY . /var/www/html/
 
 # Set permission folder uploads (writable oleh Apache)
-RUN mkdir -p /var/www/html/uploads/{gallery,news,settings} \
+RUN mkdir -p /var/www/html/uploads/{gallery,news,settings,teachers} \
  && chown -R www-data:www-data /var/www/html/uploads \
  && chmod -R 775 /var/www/html/uploads
 

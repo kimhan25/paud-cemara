@@ -8,7 +8,7 @@
 return [
     'db' => [
         'host'     => 'localhost',
-        'port'     => '5433',
+        'port'     => '5432',
         'dbname'   => 'paud_cemara',
         'user'     => 'postgres',
         'password' => '',
@@ -17,6 +17,7 @@ return [
 
     'cors_origin' => '',
     'debug' => true,
+    // Harus menunjuk ke folder public `uploads/` yang benar-benar dilayani web server.
     'upload_dir' => __DIR__ . '/../uploads',
     'session_name' => 'paud_admin_sess',
     'trust_proxy' => false,

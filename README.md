@@ -38,7 +38,26 @@ Contoh:
 cd C:\path\ke\project\paud-cemara
 ```
 
-### 2. Pastikan PHP CLI siap
+### 2. Jika PHP belum terpasang, install PHP CLI
+
+Cara paling aman untuk project ini:
+
+1. Download PHP 8.2 atau 8.3 untuk Windows dari situs resmi PHP
+2. Extract ke folder tetap, misalnya `C:\php`
+3. Copy `php.ini-development` menjadi `php.ini`
+4. Pastikan extension berikut aktif di `php.ini`:
+   - `extension=pdo_pgsql`
+   - `extension=pgsql`
+   - `extension=mbstring`
+   - `extension=fileinfo`
+5. Tambahkan `C:\php` ke `PATH` Windows
+6. Tutup lalu buka ulang PowerShell
+
+Jika ingin lebih sederhana, install PHP lewat installer/tool yang memang menyediakan
+`php.exe` untuk command line. Yang penting hasil akhirnya adalah command `php`
+bisa dipanggil dari PowerShell dan extension di bawah aktif.
+
+### 3. Pastikan PHP CLI siap
 
 Jalankan:
 
@@ -59,7 +78,7 @@ Yang harus tersedia:
 
 Jika `php` tidak dikenali, periksa instalasi PHP dan `PATH`.
 
-### 3. Pastikan PostgreSQL Desktop siap
+### 4. Pastikan PostgreSQL Desktop siap
 
 Jalankan:
 
@@ -72,7 +91,7 @@ Service PostgreSQL harus berstatus `Running`.
 
 Jika belum aktif, nyalakan dari aplikasi `Services` di Windows.
 
-### 4. Buat database `paud_cemara`
+### 5. Buat database `paud_cemara`
 
 Opsi `pgAdmin`:
 
@@ -88,13 +107,13 @@ Opsi `psql`:
 createdb -h localhost -p 5432 -U postgres paud_cemara
 ```
 
-### 5. Import schema dan seed
+### 6. Import schema dan seed
 
 Opsi `pgAdmin`:
 
 1. Klik database `paud_cemara`
 2. Buka `Tools > Query Tool`
-3. Jalankan isi file `sql/schema.sql`
+3. Buka file `sql/schema.sql`, lalu jalankan seluruh isinya
 4. Setelah selesai, jalankan isi file `sql/seed.sql`
 
 Opsi `psql`:
@@ -104,7 +123,7 @@ psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql\schema.sql
 psql -h localhost -p 5432 -U postgres -d paud_cemara -f sql\seed.sql
 ```
 
-### 6. Buat config lokal
+### 7. Buat config lokal
 
 Copy file contoh:
 
@@ -136,13 +155,13 @@ Catatan penting:
 - PostgreSQL Desktop di Windows biasanya memakai port `5432`
 - jika PostgreSQL lokal memakai port lain, sesuaikan di `api/config.local.php`
 
-### 7. Buat akun admin
+### 8. Buat akun admin
 
 ```powershell
 php sql\make_admin.php admin PasswordKuat123
 ```
 
-### 8. Jalankan aplikasi
+### 9. Jalankan aplikasi
 
 ```powershell
 php -S localhost:8000
@@ -204,6 +223,9 @@ Endpoint admin:
 ## Catatan repo
 
 - `uploads/` hanya menyimpan placeholder di repo
+- file gambar yang sudah di-upload tersimpan sebagai file fisik di `uploads/`
+- saat pindah ke server lain, copy folder `uploads/` bersama database PostgreSQL
+- untuk Docker atau platform container, `uploads/` harus dipasang ke storage persisten
 - file upload asli tidak perlu di-commit
 - `api/config.local.php`, `.env`, dan kredensial lokal tidak masuk repo
 - environment variable `PAUD_*` bisa dipakai untuk override sementara

@@ -25,14 +25,16 @@ function deleteManagedUpload(?string $relPath): void
 
     $cfg = require __DIR__ . '/config.php';
     $uploadBase = realpath((string)$cfg['upload_dir']);
-    $projectRoot = realpath(dirname((string)$cfg['upload_dir']));
-    if (!$uploadBase || !$projectRoot) return;
+    if (!$uploadBase || !is_dir($uploadBase)) return;
 
-    $absPath = $projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized);
+    $relativeFile = substr($normalized, strlen('uploads/'));
+    if ($relativeFile === false || $relativeFile === '') return;
+
+    $absPath = $uploadBase . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeFile);
     $realFile = realpath($absPath);
     if (!$realFile || !is_file($realFile)) return;
 
-    if (str_starts_with($realFile, $uploadBase . DIRECTORY_SEPARATOR) || $realFile === $uploadBase) {
+    if (str_starts_with($realFile, $uploadBase . DIRECTORY_SEPARATOR)) {
         @unlink($realFile);
     }
 }

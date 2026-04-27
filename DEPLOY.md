@@ -34,6 +34,7 @@ Urutan implementasi yang direkomendasikan:
 - [ ] Set `cors_origin` di `api/config.php` menjadi domain Anda, **bukan `*`**, untuk produksi
 - [ ] Pastikan HTTPS aktif (Let's Encrypt gratis)
 - [ ] Konfigurasi upload: `uploads/` harus writable oleh user web server (biasanya `www-data`)
+- [ ] Jika project sudah pernah dipakai, copy folder `uploads/` lama ke server. Dump database saja tidak cukup
 - [ ] Cadangan DB: `pg_dump` periodik (lihat bagian *Backup* di bawah)
 - [ ] Set `PAUD_TRUST_PROXY=1` saat app berada di balik reverse proxy / load balancer
 - [ ] Set `PAUD_SESSION_SECURE=1` saat cookie admin harus selalu `Secure`
@@ -48,9 +49,24 @@ PAUD_DB_NAME=paud_cemara
 PAUD_DB_USER=paud_user
 PAUD_DB_PASS=rahasia_kuat
 PAUD_DB_SSLMODE=
+PAUD_UPLOAD_DIR=/var/www/paud-cemara/uploads
 PAUD_TRUST_PROXY=0
 PAUD_SESSION_SECURE=0
 ```
+
+## Data yang harus ikut saat pindah server
+
+Simpan dan pindahkan tiga hal ini bersama-sama:
+
+1. dump database PostgreSQL
+2. seluruh folder `uploads/`
+3. konfigurasi koneksi database (`PAUD_*` atau `api/config.local.php`)
+
+Catatan penting:
+
+- database hanya menyimpan path relatif seperti `uploads/gallery/nama-file.jpg`
+- file gambar aslinya tetap berada di filesystem server
+- jika database dipindah tanpa folder `uploads/`, data masih ada tetapi gambar akan rusak
 
 ---
 
@@ -91,13 +107,17 @@ sudo -u postgres psql -d paud_cemara -f sql/schema.sql
 sudo -u postgres psql -d paud_cemara -f sql/seed.sql
 
 # Buat admin
-sudo PAUD_DB_USER=paud_user PAUD_DB_PASS='GANTI_INI' \
+sudo PAUD_DB_HOST=localhost PAUD_DB_PORT=5432 PAUD_DB_NAME=paud_cemara \
+     PAUD_DB_USER=paud_user PAUD_DB_PASS='GANTI_INI' \
      php sql/make_admin.php admin 'PasswordKuat123!'
 
 # Pastikan folder upload writable
 sudo chmod -R 775 uploads
 sudo chown -R www-data:www-data uploads
 ```
+
+Jika project sudah pernah dipakai sebelumnya, salin juga isi folder `uploads/`
+ke server ini sebelum situs dibuka ke publik.
 
 ### 4. Apache virtualhost
 
@@ -116,6 +136,7 @@ Edit `/etc/apache2/sites-available/paud.conf`:
 
     # Pass kredensial DB ke PHP via env
     SetEnv PAUD_DB_HOST localhost
+    SetEnv PAUD_DB_PORT 5432
     SetEnv PAUD_DB_NAME paud_cemara
     SetEnv PAUD_DB_USER paud_user
     SetEnv PAUD_DB_PASS GANTI_INI
@@ -171,6 +192,34 @@ Alur sederhananya:
 6. Mount `uploads/` ke volume persisten
 
 **Penting:** jangan deploy ke filesystem ephemeral kalau upload gambar dipakai aktif.
+
+Build image:
+
+```bash
+docker build -t paud-cemara:latest .
+```
+
+Contoh `docker run`:
+
+```bash
+docker volume create paud_uploads
+
+docker run -d \
+  --name paud-cemara \
+  -p 8080:80 \
+  -e PAUD_DB_HOST=GANTI_HOST_DB \
+  -e PAUD_DB_PORT=5432 \
+  -e PAUD_DB_NAME=paud_cemara \
+  -e PAUD_DB_USER=paud_user \
+  -e PAUD_DB_PASS=GANTI_INI \
+  -e PAUD_UPLOAD_DIR=/var/www/html/uploads \
+  -e PAUD_TRUST_PROXY=1 \
+  -e PAUD_SESSION_SECURE=1 \
+  -v paud_uploads:/var/www/html/uploads \
+  paud-cemara:latest
+```
+
+Kalau sudah ada gambar dari mesin lain, copy isi `uploads/` lama ke volume atau bind mount yang dipakai container.
 
 ---
 
@@ -239,5 +288,6 @@ Untuk project ini, VPS tetap lebih aman dan lebih efisien secara operasional.
 | Halaman publik blank, console error `Cannot read 'SEED'` | JSX gagal di-compile → cek browser Console; biasanya typo di file `.jsx` |
 | Login gagal terus walau password benar | Cookie session tidak set — biasanya CORS atau `cors_origin` mismatch |
 | Upload gambar 500 error | `uploads/` tidak writable → `chmod 775 uploads && chown www-data:www-data uploads` |
+| Gambar lama hilang setelah pindah server | Folder `uploads/` lama tidak ikut disalin atau container tidak memakai storage persisten |
 | API `500 Database connection failed` | Kredensial `PAUD_DB_*` salah atau Postgres belum jalan |
 | Admin auto-logout terus | Idle timeout 2 jam di `_session.php` — aman, login ulang |
